@@ -1,0 +1,36 @@
+{
+  "experiment_name": "language-translation-indic-mlops",
+  "run_id": "run-1791912684",
+  "timestamp": "2026-10-13T17:31:24Z",
+  "parameters": {
+    "model_name": "M2M100-Indic-v2.1",
+    "model_version": "v2.1",
+    "architecture": "Seq2Seq Transformer (M2M100 architecture)",
+    "supported_languages": [
+      "en",
+      "hi",
+      "te",
+      "ta",
+      "es",
+      "fr",
+      "de"
+    ],
+    "beam_size": 4,
+    "max_target_length": 256,
+    "learning_rate": "5e-5",
+    "batch_size": 16,
+    "quantization": "INT8 ONNX"
+  },
+  "metrics": {
+    "bleu_mean": 38.6,
+    "chrf_mean": 61.2,
+    "latency_p50_ms": 145.0,
+    "latency_p95_ms": 228.0,
+    "eval_status": "PASS"
+  },
+  "tags": {
+    "environment": "production-academic",
+    "framework": "PyTorch / Transformers / ONNX",
+    "mlops_status": "promoted"
+  }
+}
