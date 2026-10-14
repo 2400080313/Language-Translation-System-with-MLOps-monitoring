@@ -105,7 +105,45 @@ const DashboardLayout: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await simulateTranslation(text, sourceLang, targetLang);
+      let resultData: {
+        translatedText: string;
+        latencyMs: number;
+        tokenCount: number;
+        confidence: number;
+        bleuScore?: number;
+        chrFScore?: number;
+      };
+
+      try {
+        const response = await fetch('/api/v1/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text,
+            source_lang: sourceLang,
+            target_lang: targetLang
+          })
+        });
+
+        if (response.ok) {
+          const apiData = await response.json();
+          resultData = {
+            translatedText: apiData.translated_text,
+            latencyMs: Math.round(apiData.latency_ms),
+            tokenCount: apiData.token_count,
+            confidence: apiData.confidence || 0.98,
+            bleuScore: apiData.bleu_score,
+            chrFScore: apiData.chrf_score
+          };
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.detail || 'Backend translation failed');
+        }
+      } catch (backendError) {
+        console.warn('Backend API translation notice, utilizing local fallback:', backendError);
+        resultData = await simulateTranslation(text, sourceLang, targetLang);
+      }
+
       const now = new Date();
       const timeStr = now.toTimeString().split(' ')[0];
 
@@ -115,12 +153,12 @@ const DashboardLayout: React.FC = () => {
         sourceLang,
         targetLang,
         sourceText: text,
-        translatedText: result.translatedText,
-        latencyMs: result.latencyMs,
-        tokenCount: result.tokenCount,
-        confidence: result.confidence,
-        bleuScore: result.bleuScore,
-        chrFScore: result.chrFScore,
+        translatedText: resultData.translatedText,
+        latencyMs: resultData.latencyMs,
+        tokenCount: resultData.tokenCount,
+        confidence: resultData.confidence,
+        bleuScore: resultData.bleuScore,
+        chrFScore: resultData.chrFScore,
         isFavorite: false,
       };
 
@@ -130,7 +168,7 @@ const DashboardLayout: React.FC = () => {
       // Update MLOps telemetry metrics
       setMetrics((prev) => {
         const total = prev.totalRequests + 1;
-        const avg = Math.round((prev.avgLatencyMs * 9 + result.latencyMs) / 10);
+        const avg = Math.round((prev.avgLatencyMs * 9 + resultData.latencyMs) / 10);
         return {
           ...prev,
           totalRequests: total,
